@@ -1,3 +1,4 @@
+// backend/src/services/scoringEngine.js
 const Groq = require('groq-sdk');
 const { GROQ_API_KEY } = require('../config/env');
 const groq = new Groq({ apiKey: GROQ_API_KEY });
@@ -6,24 +7,27 @@ class ScoringEngine {
   async calculate(rawData) {
     const scores = {};
 
-    // Market Heat
+    // MARKET HEAT – from SerpAPI
     const avgInterest = rawData.serpApi?.avgInterest || 0;
-    scores.marketHeat = await this.enhanceScore('marketHeat', Math.min((avgInterest/100)*10, 10), rawData);
+    scores.marketHeat = await this.enhanceScore('marketHeat', avgInterest ? Math.min((avgInterest/100)*10, 10) : null, rawData);
 
-    // Profit Margin
-    const compPrice = rawData.rapidApi?.avgPrice || 0;
+    // PROFIT MARGIN – from Amazon + Suppliers
+    const compPrice = rawData.amazonScraper?.avgPrice || 0;
     const suppPrice = this.getLowestPrice(rawData.scrapingBee);
-    const rawMargin = compPrice > 0 ? Math.min(Math.max(((compPrice - suppPrice) / compPrice) * 10, 0), 10) : 5;
+    let rawMargin = null;
+    if (compPrice > 0 && suppPrice > 0) {
+      rawMargin = Math.min(Math.max(((compPrice - suppPrice) / compPrice) * 10, 0), 10);
+    }
     scores.profitMargin = await this.enhanceScore('profitMargin', rawMargin, rawData);
 
-    // Ad Strength
+    // AD STRENGTH – from Apify
     const fbAds = rawData.apify?.ads || [];
-    const avgEng = fbAds.reduce((acc, a) => acc + (a.engagement||0), 0) / (fbAds.length||1);
-    scores.adStrength = await this.enhanceScore('adStrength', Math.min((avgEng/100)*10, 10), rawData);
+    const avgEng = fbAds.length ? fbAds.reduce((acc, a) => acc + (a.engagement||0), 0) / fbAds.length : 0;
+    scores.adStrength = await this.enhanceScore('adStrength', fbAds.length ? Math.min((avgEng/100)*10, 10) : null, rawData);
 
-    // Urgency (trend change)
+    // URGENCY – from SerpAPI trends
     const trends = rawData.serpApi?.interestOverTime || [];
-    let urgency = 5;
+    let urgency = null;
     if (trends.length > 1) {
       const last = trends[trends.length-1].values[0]?.extracted_value || 0;
       const first = trends[0].values[0]?.extracted_value || 1;
@@ -31,17 +35,24 @@ class ScoringEngine {
     }
     scores.urgency = await this.enhanceScore('urgency', urgency, rawData);
 
-    // Viral Score
-    const views = rawData.rapidApi?.totalViews || 0;
-    scores.viralScore = await this.enhanceScore('viralScore', Math.min((views/1000000)*10, 10), rawData);
+    // VIRAL SCORE – removed (no TikTok data now) – set to null
+    scores.viralScore = {
+      value: null,
+      source: 'N/A',
+      details: 'TikTok API disabled – using Amazon scraper instead'
+    };
 
+    // CONFIDENCE
     scores.confidence = this.confidenceLevel(rawData);
     return scores;
   }
 
   async enhanceScore(metric, rawValue, rawData) {
+    if (rawValue === null || rawValue === undefined) {
+      return { value: null, source: 'No Data', details: 'N/A' };
+    }
     try {
-      const prompt = `Given raw score ${rawValue} for '${metric}' and market data: ${JSON.stringify(rawData)}, return refined score 0-10 with one decimal. Only output number.`;
+      const prompt = `Given raw score ${rawValue} for '${metric}' and market data, return refined score 0-10 with one decimal. Only output number.`;
       const chat = await groq.chat.completions.create({
         messages: [{ role: 'user', content: prompt }],
         model: 'llama3-8b-8192',
