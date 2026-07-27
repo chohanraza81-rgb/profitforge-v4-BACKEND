@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+
 const AlertSchema = new mongoose.Schema({
   userId: { type: String, required: true },
   keyword: String,
@@ -6,4 +7,5 @@ const AlertSchema = new mongoose.Schema({
   frequency: { type: String, default: 'daily' },
   lastSent: Date,
 }, { timestamps: true });
+
 module.exports = mongoose.model('Alert', AlertSchema);
