@@ -1,7 +1,7 @@
 const serpApi = require('./serpApi');
 const apify = require('./apify');
 const scrapingBee = require('./scrapingBee');
-const amazonScraper = require('./amazonScraper');  // ✅ New
+const amazonScraper = require('./amazonScraper');   // ✅ new
 const shopify = require('./shopify');
 const googleShopping = require('./googleShopping');
 const ebay = require('./ebay');
@@ -11,7 +11,7 @@ module.exports = {
   serpApi,
   apify,
   scrapingBee,
-  amazonScraper,    // ✅ New (replaces rapidApi)
+  amazonScraper,
   shopify,
   googleShopping,
   ebay,
