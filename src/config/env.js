@@ -9,7 +9,7 @@ const envSchema = z.object({
   MONGODB_URI: z.string().url(),
   REDIS_URL: z.string().url(),
   SERPAPI_KEY: z.string().min(1),
-  RAPIDAPI_KEY: z.string().min(1),
+  AMAZON_SCRAPER_KEY: z.string().min(1),   // ✅ new – replaces RAPIDAPI_KEY
   APIFY_API_TOKEN: z.string().min(1),
   SCRAPINGBEE_API_KEY: z.string().min(1),
   GROQ_API_KEY: z.string().min(1),
@@ -21,6 +21,14 @@ const envSchema = z.object({
   EMAIL_USER: z.string().email(),
   EMAIL_PASS: z.string().min(1),
   EMAIL_FROM: z.string().email(),
+  SHOPIFY_API_KEY: z.string().optional(),
+  GOOGLE_SHOPPING_API_KEY: z.string().optional(),
+  EBAY_API_KEY: z.string().optional(),
+  ETSY_API_KEY: z.string().optional(),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_REDIRECT_URI: z.string().url().optional(),
+  NOTION_API_KEY: z.string().optional(),
 });
 
 const env = envSchema.safeParse(process.env);
