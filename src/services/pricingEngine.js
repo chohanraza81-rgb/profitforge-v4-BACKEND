@@ -1,6 +1,6 @@
 class PricingEngine {
   async recommend(rawData, scores) {
-    const compAvg = rawData.amazonScraper?.avgPrice || 25;
+    const compAvg = rawData.amazonScraper?.avgPrice || 0;
     const cheapest = this.getCheapestSupplier(rawData.scrapingBee);
     
     let recommended = 20;
@@ -11,15 +11,14 @@ class PricingEngine {
       const targetMargin = 0.30;
       recommended = cheapest.price / (1 - targetMargin);
       recommended = Math.round(recommended * 2) / 2;
-      
       markup = ((recommended - cheapest.price) / cheapest.price * 100);
       margin = ((recommended - cheapest.price) / recommended * 100);
     }
 
     return {
-      recommended,
-      competitorAverage: compAvg,
-      cheapestSupplierPrice: cheapest.price,
+      recommended: recommended || 0,
+      competitorAverage: compAvg || 0,
+      cheapestSupplierPrice: cheapest.price || 0,
       markup: isFinite(markup) ? markup.toFixed(0) + '%' : 'N/A',
       margin: isFinite(margin) ? margin.toFixed(0) + '%' : 'N/A'
     };
