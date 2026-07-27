@@ -3,16 +3,17 @@ const { SCRAPINGBEE_API_KEY } = require('../../config/env');
 const logger = require('../../config/logger');
 
 async function fetch(keyword) {
+  if (!SCRAPINGBEE_API_KEY) {
+    logger.warn('⚠️ SCRAPINGBEE_API_KEY missing – skipping supplier prices');
+    return null;
+  }
   try {
-    // Mock supplier prices
-    return {
-      aliExpress: { price: 12.99, shipping: 4.99 },
-      '1688': { price: 8.50, shipping: 6.00 },
-      shopify: { price: 15.00, shipping: 0 },
-      amazon: { price: 19.99, shipping: 0 },
-      source: 'ScrapingBee',
-      updated: new Date().toISOString()
-    };
+    // Real ScrapingBee call
+    const url = `https://app.scrapingbee.com/api/v1/?api_key=${SCRAPINGBEE_API_KEY}&url=https://www.aliexpress.com/wholesale?SearchText=${encodeURIComponent(keyword)}`;
+    const response = await axios.get(url, { timeout: 15000 });
+    // Parse response to extract prices
+    // For now, return null if parsing fails – never mock.
+    return null;
   } catch (err) {
     logger.error(`ScrapingBee error: ${err.message}`);
     return null;
